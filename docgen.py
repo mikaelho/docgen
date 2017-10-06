@@ -31,6 +31,7 @@ class Processor():
     self.lines = file_text.splitlines()
     self.section_lines = []
     self.section_titles = {}
+    self.used_section_titles = set()
     
   def get_markdown(self, include_undocumented=False):
     ''' Produces the markdown for the file.
@@ -58,11 +59,17 @@ class Processor():
     func_result, func_toc = self.for_functions(self.tree, 'Functions', 0)
     toc += func_toc
     
+    api_result = ''
     if len(toc) > 0:
-      result += '# API\n\n'
-      result += self.build_toc(toc) + '\n\n'
+      api_result += '# API\n\n'
+      api_result += self.build_toc(toc) + '\n\n'
+    api_result += classes_result + func_result
     
-    return result + classes_result + func_result
+    toc_magic = '#docgen-toc'
+    if result.find(toc_magic) > -1:
+      return result.replace(toc_magic, api_result)
+    else:
+      return result + api_result
   
   def get_sections(self):
     magic_string = '#docgen: '
@@ -75,8 +82,10 @@ class Processor():
     for section_line_no in self.section_lines:
       if section_line_no >= line_no:
         break
-      if line_no - section_line_no < 5:
-        return self.section_titles[section_line_no]
+      if line_no - section_line_no < 5 and section_line_no not in self.used_section_titles:
+        title = self.section_titles[section_line_no]
+        self.used_section_titles.add(section_line_no)
+        return title
     return None
   
   def for_classes(self):    
@@ -124,6 +133,9 @@ class Processor():
       while True:
         stripped = self.lines[line_actual-1].strip()
         if stripped.startswith('@'):
+          line_actual += 1
+          if stripped == '@on_main_thread':
+            continue
           if stripped == '@property':
             property_operations[f.name] = ['get']
             docstr = ast.get_docstring(f)
@@ -137,7 +149,6 @@ class Processor():
             property_operations[f.name].append('del')
             property_descriptor = True
           descriptors.append(stripped)
-          line_actual += 1
         else:
           break
       if property_descriptor:
@@ -236,5 +247,5 @@ if __name__ == '__main__':
     md_dirname = os.path.dirname(editor.get_path())
     md_filename = 'README.md' if choice == 2 else filename + '.md'
     
-    with open(md_dirname + '/' + md_filename, 'w') as f:
+    with open(md_dirname + '/' + md_filename, 'w', encoding='utf-8') as f:
       f.write(result)
