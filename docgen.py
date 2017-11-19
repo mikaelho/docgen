@@ -108,8 +108,8 @@ class Processor():
     result = ''
        
     for c in classes:
-      heading = f'Class: {c.name}'
-      result += f'## {heading}\n\n'
+      heading = 'Class: ' + c.name
+      result += '## ' + heading + '\n\n'
       toc.append((heading, 0))
       docstr = ast.get_docstring(c)
       if docstr:
@@ -130,7 +130,7 @@ class Processor():
     toc = []
     
     if len(funcs) > 1:
-      func_heading = f'{"#"*(toc_level+1)} {heading}\n\n'
+      func_heading = "#"*(toc_level+1) + ' ' + heading+ '\n\n'
       result += func_heading
       toc.append((heading, toc_level))
     
@@ -175,7 +175,7 @@ class Processor():
           result += '  ' + line + '\n'
           
     if len(property_operations) > 0:
-      prop_heading = f'{"#"*(toc_level+1)} Properties\n\n'
+      prop_heading = "#"*(toc_level+1) + ' Properties\n\n'
       result += prop_heading
       toc.append(('Properties', toc_level))
       for prop in property_operations:
@@ -191,7 +191,7 @@ class Processor():
     result = ''
     for title, level in toc:
       result += '  '*level
-      result += f'* [{title}](#{slugify(title)})\n'
+      result += '* [' + title + '](#' + slugify(title) + ')\n'
     return result
   
 #docgen: Utility functions
