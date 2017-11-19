@@ -1,18 +1,31 @@
 #coding: utf-8
 
 '''
-Pythonista markdown document generator from a single file, intended to be used to generate documentation for Github. What's included:
+Pythonista markdown document generator from a single file, intended to be used to generate documentation for Github. Included in the generated documentation are:
       
 * Module-level docstring.
 * Classes and their functions, with
 docstrings.
 * Module-level functions and their docstrings.
+* Decorators are included, with the following special cases:
+  * Properties are placed in a separate section, using the docstring of the getter.
+  * `on_main_thread` decorators are ignored.
+* A table of contents.
       
 Functions and methods that start with '_' are not included in the documentation.
 
 # Usage
 
-To be included.
+Include this script in the Pythonista action (wrench) menu, and run it to generate documentation for the file currently open in the editor.
+
+You can choose to just view the resulting documentation as HTML, or also save it as either `README.md` or `<script_name>.md`.
+
+Table of contents is included after the module docstring.
+
+There are some special directives you can use to fine-tune the output. These are magic comment strings that must be preceeded only by white space.
+  
+* `#docgen-toc` - Table of contents will replace this string if found in the module docstring, so that you can have the ToC in the middle of it instead of at the end.
+* `#docgen: ` (with a space after the colon) - Use to group functions into related groups. The text you provide after the colon will be included in the table of contents.
 '''
 
 import editor, console, ui, markdown2
@@ -38,8 +51,7 @@ class Processor():
     
     Optional arguments:
       
-      * `include_undocumented` - set to `True` if
-      you do not want to skip classes and methods without a docstring.
+    * `include_undocumented` - set to `True` to include classes and methods without a docstring.
     '''
     result = ''
     
@@ -66,7 +78,7 @@ class Processor():
     api_result += classes_result + func_result
     
     toc_magic = '#docgen-toc'
-    if result.find(toc_magic) > -1:
+    if result.strip().find(toc_magic) == 0:
       return result.replace(toc_magic, api_result)
     else:
       return result + api_result
@@ -74,7 +86,7 @@ class Processor():
   def get_sections(self):
     magic_string = '#docgen: '
     for line_no, line in enumerate(self.lines):
-      if magic_string in line:
+      if line.strip().find(magic_string) == 0:
         self.section_lines.append(line_no+1)
         self.section_titles[line_no+1] = line.strip()[len(magic_string):]
         
@@ -153,18 +165,23 @@ class Processor():
           break
       if property_descriptor:
         continue
-      result += '\n#### `' + ','.join(descriptors) + ' ' + stripped[len('def '):-1] + '`\n\n'
+      descriptor_str = '`' + ', '.join(descriptors) + '`\n' if len(descriptors) > 0 else ''
+      result += '\n#### `' + stripped[len('def '):-1] + '`\n' + descriptor_str + '\n'
       docstr = ast.get_docstring(f)
       if docstr:
         for line in iter(docstr.splitlines()):
           result += '  ' + line + '\n'
           
     if len(property_operations) > 0:
-      prop_heading = f'### Properties\n\n'
+      prop_heading = f'{"#"*(toc_level+1)} Properties\n\n'
       result += prop_heading
       toc.append(('Properties', toc_level))
       for prop in property_operations:
         result += '\n#### `' + prop + ' (' + ', '.join(property_operations[prop]) + ')`\n\n'
+        docstr = property_docstrings.get(prop, None)
+        if docstr:
+          for line in iter(docstr.splitlines()):
+            result += '  ' + line + '\n'
         
     return result, toc
 
@@ -192,8 +209,9 @@ def slugify(s):
   """
   Simplifies ugly strings into something URL-friendly.
 
-  >>> print slugify("[Some] _ Article's Title--")
-  some-articles-title
+  ```
+  slugify("[Some] _ Article's Title--") --> some-articles-title
+  ```
   
   From http://blog.dolphm.com/slugify-a-string-in-python/
   """
