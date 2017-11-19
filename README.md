@@ -19,6 +19,8 @@ Include this script in the Pythonista action (wrench) menu, and run it to genera
 
 You can choose to just view the resulting documentation as HTML, or also save it as either `README.md` or `<script_name>.md`.
 
+![Menu image](https://raw.githubusercontent.com/mikaelho/docgen/master/menu.png)
+
 Table of contents is included after the module docstring.
 
 There are some special directives you can use to fine-tune the output. These are magic comment strings that must be preceeded only by white space.
