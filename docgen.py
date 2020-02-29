@@ -168,6 +168,9 @@ class Processor():
       if property_descriptor:
         continue
       descriptor_str = '`' + ', '.join(descriptors) + '`\n' if len(descriptors) > 0 else ''
+      while not stripped.endswith(':'):
+          line_actual += 1
+          stripped += self.lines[line_actual-1].strip()
       result += '\n#### `' + stripped[len('def '):-1] + '`\n' + descriptor_str + '\n'
       docstr = ast.get_docstring(f)
       if docstr:
@@ -196,7 +199,9 @@ class Processor():
   
 #docgen: Utility functions
   
-def el(parent, astdef):
+def el(
+    parent, 
+    astdef):
   return (e for e in parent.body if isinstance(e, astdef))
   
 def eldoc(body, astdef):
