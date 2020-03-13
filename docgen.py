@@ -26,8 +26,12 @@ Table of contents is included after the module docstring.
 
 There are some special directives you can use to fine-tune the output. These are magic comment strings that must be preceeded only by white space.
   
-* `#docgen-toc` - Table of contents will replace this string if found in the module docstring, so that you can have the ToC in the middle of it instead of at the end.
-* `#docgen: ` (with a space after the colon) - Use to group functions into related groups. The text you provide after the colon will be included in the table of contents.
+* Comment with nothing but `docgen-toc` in it - Table of contents will replace
+  this string if found in the module docstring, so that you can have the ToC
+  in the middle of it instead of at the end.
+* `#docgen: ` (with a space after the colon) - Use to group functions into
+  related groups. The text you provide after the colon will be included in the
+  table of contents.
 '''
 
 import editor, console, ui, markdown2
@@ -80,7 +84,7 @@ class Processor():
     api_result += classes_result + func_result
     
     toc_magic = '#docgen-toc'
-    if result.strip().find(toc_magic) == 0:
+    if toc_magic in result:
       return result.replace(toc_magic, api_result)
     else:
       return result + api_result
@@ -170,7 +174,7 @@ class Processor():
       descriptor_str = '`' + ', '.join(descriptors) + '`\n' if len(descriptors) > 0 else ''
       while not stripped.endswith(':'):
           line_actual += 1
-          stripped += self.lines[line_actual-1].strip()
+          stripped += ' ' + self.lines[line_actual-1].strip()
       result += '\n#### `' + stripped[len('def '):-1] + '`\n' + descriptor_str + '\n'
       docstr = ast.get_docstring(f)
       if docstr:
