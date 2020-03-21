@@ -14,7 +14,7 @@ generated documentation are:
   * `on_main_thread` decorators are ignored.
 * A table of contents.
 
-Functions and methods that start with '_' are not included in the
+Classes, functions and methods that start with '_' are not included in the
 documentation.
 
 # Usage
@@ -38,9 +38,17 @@ are magic comment strings that must be preceeded only by white space.
 * `#docgen: ` (with a space after the colon) - Use to group functions into
   related groups. The text you provide after the colon will be included in
   the table of contents.
+
+Also, for classes, including `docgen-ignore` in the docstring
+will mean that the class is not included in the generated documentation. 
+  
+## Versions
+
+* 1.1 - Added 'docgen-ignore' for classes
+* 1.0 - Initial PyPi release
 """
 
-__version__ = '1.0'
+__version__ = '1.1'
 
 import editor, console, ui, markdown2
 import ast, os, re
@@ -129,10 +137,11 @@ class Processor():
         result = ''
 
         for c in classes:
+            docstr = ast.get_docstring(c)
+            if docstr and 'docgen-ignore' in docstr: continue
             heading = 'Class: ' + c.name
             result += '## ' + heading + '\n\n'
             toc.append((heading, 0))
-            docstr = ast.get_docstring(c)
             if docstr:
                 result += docstr + '\n\n'
 
